@@ -1,10 +1,12 @@
-﻿using FastSpendingApp.Data;
+﻿using FastSpendingApp.Contracts;
+using FastSpendingApp.Data;
 using FastSpendingApp.Dtos;
 using FastSpendingApp.Entity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace FastSpendingApp.Services {
-    public class ExpenseService(FastSpendingDbContext context) {
+    public class ExpenseService(FastSpendingDbContext context) : IExpenseService {
         public async Task<ExpenseResponseDto> AddSpendingAsync(CreateExpenseDto request) {
             var NewExpense = new Expense {
                 Category = request.Category,
@@ -43,7 +45,7 @@ namespace FastSpendingApp.Services {
 
         public async Task<bool> DeleteTransactionAsync(int id) {
             var expense = await context.Expenses.FirstOrDefaultAsync(e => e.Id == id);
-            if(expense == null) {
+            if (expense == null) {
                 return false;
             }
             context.Expenses.Remove(expense);
@@ -56,18 +58,45 @@ namespace FastSpendingApp.Services {
             return CalculateStatistics(expenses, DateTime.UtcNow);
         }
 
-        public static StatisticsResponseDto CalculateStatistics(List<Expense> t, DateTime time) {
-            int TotalSpending = t.Sum(e => e.Amount);
-            int DailySpending = t.Where(t => t.CreatedAt.Day == time.Day).Sum(e => e.Amount);
-            int WeeklySpending = t.Where(t => t.CreatedAt >= time.Date.AddDays(-6)).Sum(e => e.Amount);
-            int MonthlySpending = t.Where(t => t.CreatedAt.Year == time.Year && t.CreatedAt.Month == time.Month).Sum(e => e.Amount);
-            private static readonly string[] AllCategories =
+        private static readonly string[] AllCategories =
                 {
                     "Vásárlás", "Ajándékok", "Étel", "Auto",
                     "Cigi/Vape", "Egészség", "Szórakozás", "Bármi más"
                 };
-        //List<CategorySummaryDto> Summary = AllCa
-        //}
+
+        public static StatisticsResponseDto CalculateStatistics(List<Expense> t, DateTime time) {
+            int TotalSpending = t.Sum(e => e.Amount);
+            int DailySpending = t.Where(e => e.CreatedAt.Day == time.Day && e.CreatedAt.Month == time.Month && e.CreatedAt.Year == time.Year).Sum(e => e.Amount);
+            int WeeklySpending = t.Where(e => e.CreatedAt >= time.Date.AddDays(-6)).Sum(e => e.Amount);
+            int MonthlySpending = t.Where(e => e.CreatedAt.Year == time.Year && e.CreatedAt.Month == time.Month).Sum(e => e.Amount);
+
+            List<CategorySummaryDto> summary = AllCategories
+                .Select(category => {
+                    int categoryTotal = t
+                        .Where(e => e.Category == category)
+                        .Sum(e => e.Amount);
+
+                    double percentage = TotalSpending == 0
+                        ? 0
+                        : (double)categoryTotal / TotalSpending * 100;
+
+                    return new CategorySummaryDto {
+                        Category = category,
+                        Total = categoryTotal,
+                        Percentage = percentage
+                    };
+                })
+                .ToList();
+
+            return new StatisticsResponseDto {
+                TotalSpending = TotalSpending,
+                DailySpending = DailySpending,
+                WeeklySpending = WeeklySpending,
+                MonthlySpending = MonthlySpending,
+                Summary = summary
+            };
+        }
+
 
     }
 }

@@ -1,5 +1,7 @@
 
+using FastSpendingApp.Contracts;
 using FastSpendingApp.Data;
+using FastSpendingApp.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace FastSpendingApp
@@ -13,6 +15,18 @@ namespace FastSpendingApp
             var connectionString = builder.Configuration.GetConnectionString("FastSpendingDbConnectionString");
             builder.Services.AddDbContext<FastSpendingDbContext>(options => options.UseSqlServer(connectionString));
             // Add services to the container.
+            builder.Services.AddScoped<IExpenseService, ExpenseService>();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("Frontend", policy =>
+                {
+                    policy.WithOrigins("http://127.0.0.1:5500")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -26,10 +40,12 @@ namespace FastSpendingApp
                 app.MapOpenApi();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            //app.UseAuthorization();
 
+
+            app.UseCors("Frontend");
 
             app.MapControllers();
 
