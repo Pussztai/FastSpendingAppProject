@@ -1,10 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ["FastSpendingApp.csproj", "./"]
+COPY ["FastSpendingApp/FastSpendingApp.csproj", "FastSpendingApp/"]
+WORKDIR /src/FastSpendingApp
 RUN dotnet restore "FastSpendingApp.csproj"
 
-COPY . .
+COPY FastSpendingApp/ .
 RUN dotnet publish "FastSpendingApp.csproj" -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
