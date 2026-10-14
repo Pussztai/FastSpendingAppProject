@@ -1,4 +1,3 @@
-```dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
@@ -17,4 +16,3 @@ ENV ASPNETCORE_HTTP_PORTS=10000
 EXPOSE 10000
 
 ENTRYPOINT ["dotnet", "FastSpendingApp.dll"]
-```
