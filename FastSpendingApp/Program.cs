@@ -13,7 +13,7 @@ namespace FastSpendingApp
             var builder = WebApplication.CreateBuilder(args);
 
             var connectionString = builder.Configuration.GetConnectionString("FastSpendingDbConnectionString");
-            builder.Services.AddDbContext<FastSpendingDbContext>(options => options.UseSqlServer(connectionString));
+            builder.Services.AddDbContext<FastSpendingDbContext>(options => options.UseNpgsql(connectionString));
             // Add services to the container.
             builder.Services.AddScoped<IExpenseService, ExpenseService>();
 
